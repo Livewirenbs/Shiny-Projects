@@ -1,0 +1,215 @@
+import tkinter as tk
+from tkinter import messagebox
+from PIL import Image, ImageTk
+import pywhatkit
+import datetime
+import time
+
+# Background Image Path
+bg_path = r"C:\Users\Jenifer\Downloads\1e4be73ab4b53d61bd905b845f84440f.jpg"
+
+#Fonts
+TITLE_FONT = ("Arial", 28, "bold")
+SUBTITLE_FONT = ("Arial", 20, "bold")
+LABEL_FONT = ("Arial", 16)
+BUTTON_FONT = ("Arial", 16, "bold")
+
+# Movie Data
+movie_details = {
+    "Maa": {"rating": "4.5", "duration": "2h 20m", "price": 180},
+    "Kannappa": {"rating": "4.4", "duration": "2h 15m", "price": 200},
+    "F1:The movie": {"rating": "4.3", "duration": "2h 10m", "price": 220},
+    "Housefull 5": {"rating": "3.8", "duration": "2h 20m", "price": 170},
+    "Kuberaa": {"rating": "4.2", "duration": "2h 30m", "price": 250}
+}
+
+# Background function
+def set_background(win):
+    try:
+        img = Image.open(bg_path)
+        img = img.resize((1000, 800))
+        bg = ImageTk.PhotoImage(img)
+        label = tk.Label(win, image=bg)
+        label.place(x=0, y=0, relwidth=1, relheight=1)
+        win.bg_img = bg
+    except:
+        win.config(bg="black")
+
+# Bill screen
+def show_bill(username, movie, city, theatre, seats, total):
+    win = tk.Tk()
+    win.title("Booking Confirmation")
+    win.geometry("500x450")
+    win.config(bg="black")
+
+    tk.Label(win, text="🎟 Booking Confirmed!", font=TITLE_FONT, fg="white", bg="black").pack(pady=25)
+
+    tk.Label(win, text=f"Name: {username}", font=LABEL_FONT, fg="lightgreen", bg="black").pack(pady=5)
+    tk.Label(win, text=f"Movie: {movie}", font=LABEL_FONT, fg="white", bg="black").pack(pady=5)
+    tk.Label(win, text=f"City: {city}", font=LABEL_FONT, fg="white", bg="black").pack(pady=5)
+    tk.Label(win, text=f"Theatre: {theatre}", font=LABEL_FONT, fg="white", bg="black").pack(pady=5)
+    tk.Label(win, text=f"Seats: {seats}", font=LABEL_FONT, fg="white", bg="black").pack(pady=5)
+
+    tk.Label(win, text=f"Total Paid: ₹{total}", font=SUBTITLE_FONT, fg="yellow", bg="black").pack(pady=20)
+
+    tk.Button(win, text="Exit", command=win.destroy,
+              font=BUTTON_FONT, bg="red", fg="white", width=12).pack(pady=15)
+
+    win.mainloop()
+
+# Login Page
+def start_app():
+    win = tk.Tk()
+    win.title("INSTACINEMA")
+    win.geometry("1000x800")
+    set_background(win)
+
+    name_var = tk.StringVar()
+    city_var = tk.StringVar()
+    movie_var = tk.StringVar()
+
+    tk.Label(win, text="🎬 INSTACINEMA", font=TITLE_FONT, bg="black", fg="white").pack(pady=30)
+
+    tk.Label(win, text="Enter Your Name", font=SUBTITLE_FONT, bg="black", fg="white").pack(pady=10)
+    tk.Entry(win, textvariable=name_var, font=LABEL_FONT, width=25).pack(pady=5)
+
+    tk.Label(win, text="Select City", font=SUBTITLE_FONT, bg="black", fg="white").pack(pady=15)
+    tk.OptionMenu(win, city_var, "Chennai", "Delhi", "Mumbai", "Bangalore").pack(pady=5)
+
+    tk.Label(win, text="Select Movie", font=SUBTITLE_FONT, bg="black", fg="white").pack(pady=15)
+    tk.OptionMenu(win, movie_var, *movie_details.keys()).pack(pady=5)
+
+    def proceed():
+        if name_var.get() and city_var.get() and movie_var.get():
+            win.destroy()
+            open_movie_page(name_var.get(), city_var.get(), movie_var.get())
+        else:
+            messagebox.showerror("Error", "Fill all fields")
+
+    tk.Button(win, text="Continue", command=proceed,
+              font=BUTTON_FONT, bg="green", fg="white", width=15).pack(pady=30)
+
+    win.mainloop()
+
+# Movie Info Page
+def open_movie_page(username, city, movie):
+    win = tk.Tk()
+    win.geometry("800x700")
+    win.title("Movie Info")
+    set_background(win)
+
+    details = movie_details[movie]
+    theatre_var = tk.StringVar()
+
+    tk.Label(win, text=movie, font=TITLE_FONT, bg="black", fg="white").pack(pady=25)
+
+    tk.Label(win, text=f"⭐ Rating: {details['rating']}", font=LABEL_FONT, bg="black", fg="white").pack()
+    tk.Label(win, text=f"⏱ Duration: {details['duration']}", font=LABEL_FONT, bg="black", fg="white").pack()
+    tk.Label(win, text=f"💰 Price: ₹{details['price']}", font=LABEL_FONT, bg="black", fg="lightgreen").pack(pady=10)
+
+    tk.Label(win, text="Select Theatre", font=SUBTITLE_FONT, bg="black", fg="white").pack(pady=20)
+
+    for t in ["INOX", "PVR", "Cinepolis"]:
+        tk.Radiobutton(win, text=t, variable=theatre_var, value=t,
+                       font=LABEL_FONT, bg="black", fg="white",
+                       selectcolor="black").pack(pady=5)
+
+    def next_page():
+        if theatre_var.get():
+            win.destroy()
+            open_seat_page(username, city, movie, theatre_var.get(), details['price'])
+        else:
+            messagebox.showerror("Error", "Select theatre")
+
+    tk.Button(win, text="Continue", command=next_page,
+              font=BUTTON_FONT, bg="blue", fg="white").pack(pady=25)
+
+    win.mainloop()
+
+# Seat Selection
+def open_seat_page(username, city, movie, theatre, price):
+    win = tk.Tk()
+    win.geometry("1000x750")
+    win.title("Seats")
+    set_background(win)
+
+    tk.Label(win, text="Select Your Seats", font=TITLE_FONT, bg="black", fg="white").pack(pady=20)
+
+    seat_vars = []
+    frame = tk.Frame(win, bg="white")
+    frame.pack()
+
+    for i in range(5):
+        for j in range(10):
+            var = tk.IntVar()
+            cb = tk.Checkbutton(frame, text=f"S{i*10+j+1}", variable=var,
+                                font=("Arial", 12), bg="lightgreen")
+            cb.grid(row=i, column=j, padx=8, pady=8)
+            seat_vars.append(var)
+
+    def confirm():
+        seats = sum(v.get() for v in seat_vars)
+        if seats > 0:
+            total = seats * price
+            win.destroy()
+            open_payment_page(username, city, movie, theatre, seats, total)
+        else:
+            messagebox.showerror("Error", "Select at least one seat")
+
+    tk.Button(win, text="Proceed to Payment", command=confirm,
+              font=BUTTON_FONT, bg="green", fg="white").pack(pady=25)
+
+    win.mainloop()
+
+# Payment Page
+def open_payment_page(username, city, movie, theatre, seats, total):
+    win = tk.Tk()
+    win.geometry("800x600")
+    win.title("Payment")
+    set_background(win)
+
+    phone_var = tk.StringVar()
+
+    tk.Label(win, text="Payment", font=TITLE_FONT, bg="black", fg="white").pack(pady=30)
+    tk.Label(win, text=f"Total Amount: ₹{total}", font=SUBTITLE_FONT,
+             bg="black", fg="yellow").pack(pady=15)
+
+    tk.Label(win, text="Enter WhatsApp Number", font=LABEL_FONT,
+             bg="black", fg="white").pack(pady=10)
+
+    tk.Entry(win, textvariable=phone_var, font=LABEL_FONT, width=20).pack(pady=5)
+
+    def send_ticket(number):
+        try:
+            now = datetime.datetime.now()
+            hour = now.hour
+            minute = now.minute + 1
+            if minute >= 60:
+                minute -= 60
+                hour = (hour + 1) % 24
+
+            msg = f"🎟 INSTACINEMA\n{username}\n{movie}\nSeats:{seats}\n₹{total}"
+
+            pywhatkit.sendwhatmsg(f"+91{number}", msg, hour, minute,
+                                  wait_time=10, tab_close=True, close_time=3)
+            time.sleep(10)
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def confirm():
+        number = phone_var.get()
+        if number.isdigit() and len(number) == 10:
+            send_ticket(number)
+            win.destroy()
+            show_bill(username, movie, city, theatre, seats, total)
+        else:
+            messagebox.showerror("Error", "Enter valid 10-digit number")
+
+    tk.Button(win, text=f"Pay ₹{total}", command=confirm,
+              font=BUTTON_FONT, bg="green", fg="white", width=15).pack(pady=30)
+
+    win.mainloop()
+
+# ✅ Run App
+start_app()
