@@ -1,0 +1,302 @@
+import tkinter as tk
+from tkinter import messagebox, ttk
+import sqlite3
+from datetime import datetime
+import winsound
+
+ADMIN_USER = "admin"
+ADMIN_PASS = "1234"
+
+# ===== DATABASE =====
+conn = sqlite3.connect("votes.db")
+cur = conn.cursor()
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS registered_voters(
+    voter_id TEXT PRIMARY KEY,
+    dob TEXT,
+    has_voted INTEGER DEFAULT 0
+)
+""")
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS votes(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    voter_id TEXT,
+    candidate TEXT,
+    time TEXT,
+    booth TEXT
+)
+""")
+
+conn.commit()
+
+# Dummy voters
+for i in range(1, 51):
+    voter_id = f"V{1000+i}"
+    cur.execute("""
+    INSERT OR IGNORE INTO registered_voters (voter_id, dob)
+    VALUES (?,?)
+    """, (voter_id, "2000-01-01"))
+conn.commit()
+
+# ===== FUNCTIONS =====
+def beep():
+    winsound.Beep(1000, 200)
+
+def calculateAge(dob):
+    birth = datetime.strptime(dob, "%Y-%m-%d")
+    today = datetime.today()
+    return today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+
+def is_voting_time():
+    now = datetime.now().time()
+    return datetime.strptime("10:00","%H:%M").time() <= now <= datetime.strptime("17:00","%H:%M").time()
+
+# ===== MAIN WINDOW =====
+root = tk.Tk()
+root.title("Secure Online Voting System")
+root.geometry("1000x650")
+root.configure(bg="#dfe6e9")
+
+frame = tk.Frame(root, bg="white", padx=40, pady=40)
+frame.place(relx=0.5, rely=0.5, anchor="center")
+
+tk.Label(frame, text="SECURE ONLINE VOTING SYSTEM",
+         font=("Arial",28,"bold"),
+         bg="white", fg="#2d3436").pack(pady=20)
+
+# ===== ADMIN LOGIN =====
+def admin_login():
+    win = tk.Toplevel(root)
+    win.title("Admin Login")
+    win.geometry("400x320")
+    win.configure(bg="#dfe6e9")
+
+    box = tk.Frame(win, bg="white", padx=20, pady=20)
+    box.place(relx=0.5, rely=0.5, anchor="center")
+
+    tk.Label(box, text="Admin Login",
+             font=("Arial",20,"bold"),
+             bg="white").pack(pady=10)
+
+    # ✅ ADMIN INSTRUCTIONS
+    tk.Label(box,
+             text="Username: admin\nPassword: 1234",
+             font=("Arial",10),
+             bg="white",
+             fg="gray").pack(pady=5)
+
+    user = tk.Entry(box, font=("Arial",14))
+    user.pack(pady=5)
+
+    pwd = tk.Entry(box, show="*", font=("Arial",14))
+    pwd.pack(pady=5)
+
+    def check():
+        if user.get()==ADMIN_USER and pwd.get()==ADMIN_PASS:
+            admin_panel()
+            win.destroy()
+        else:
+            beep()
+            messagebox.showerror("Error","Invalid Login")
+
+    tk.Button(box, text="Login",
+              font=("Arial",14),
+              command=check).pack(pady=10)
+
+# ===== ADMIN PANEL =====
+def admin_panel():
+    panel = tk.Toplevel(root)
+    panel.title("Admin Panel")
+    panel.geometry("1000x650")
+    panel.configure(bg="#ecf0f1")
+
+    tk.Label(panel, text="ADMIN PANEL - VOTING HISTORY",
+             font=("Arial",24,"bold"),
+             bg="#2c3e50", fg="white").pack(fill="x")
+
+    frame = tk.Frame(panel)
+    frame.pack(fill="both", expand=True, padx=20, pady=10)
+
+    table = ttk.Treeview(frame,
+        columns=("VoterID","Candidate","Time","Booth"),
+        show="headings")
+
+    for col in ("VoterID","Candidate","Time","Booth"):
+        table.heading(col, text=col)
+        table.column(col, width=150)
+
+    table.pack(fill="both", expand=True)
+
+    result_label = tk.Label(panel, font=("Arial",14),
+                            bg="white", justify="left")
+    result_label.pack(fill="x", padx=20, pady=10)
+
+    def load_data():
+        table.delete(*table.get_children())
+
+        cur.execute("SELECT voter_id,candidate,time,booth FROM votes")
+        rows = cur.fetchall()
+
+        for row in rows:
+            table.insert("", tk.END, values=row)
+
+        cur.execute("SELECT candidate, COUNT(*) FROM votes GROUP BY candidate")
+        results = cur.fetchall()
+
+        text = "📊 Candidate Wise Results:\n"
+        if results:
+            for r in results:
+                text += f"{r[0]} : {r[1]} votes\n"
+        else:
+            text += "No votes yet\n"
+
+        cur.execute("SELECT booth, COUNT(*) FROM votes GROUP BY booth")
+        booths = cur.fetchall()
+
+        text += "\n🏢 Booth Wise Results:\n"
+        if booths:
+            for b in booths:
+                text += f"{b[0]} : {b[1]} votes\n"
+        else:
+            text += "No data\n"
+
+        result_label.config(text=text)
+
+    tk.Button(panel, text="Refresh",
+              font=("Arial",14),
+              bg="#0984e3", fg="white",
+              command=load_data).pack(pady=5)
+
+    def reset():
+        cur.execute("DELETE FROM votes")
+        cur.execute("UPDATE registered_voters SET has_voted=0")
+        conn.commit()
+        messagebox.showinfo("Reset","Election Reset Successful")
+        load_data()
+
+    tk.Button(panel, text="Reset Election",
+              font=("Arial",14),
+              bg="#d63031", fg="white",
+              command=reset).pack(pady=5)
+
+    load_data()
+
+# ===== VOTER LOGIN =====
+def voter_login():
+    win = tk.Toplevel(root)
+    win.title("Voter Login")
+    win.geometry("400x450")
+    win.configure(bg="#dfe6e9")
+
+    box = tk.Frame(win, bg="white", padx=20, pady=20)
+    box.place(relx=0.5, rely=0.5, anchor="center")
+
+    tk.Label(box, text="Voter Login",
+             font=("Arial",20,"bold"),
+             bg="white").pack(pady=10)
+
+    # ✅ VOTER INSTRUCTIONS
+    tk.Label(box,
+             text="Use Voter ID: V1001 - V1050\nDOB: 2000-01-01",
+             font=("Arial",10),
+             bg="white",
+             fg="gray").pack(pady=5)
+
+    vid = tk.Entry(box, font=("Arial",14))
+    vid.pack(pady=5)
+
+    dob_entry = tk.Entry(box, font=("Arial",14))
+    dob_entry.pack(pady=5)
+
+    booth_var = tk.StringVar(value="Booth-1")
+    ttk.Combobox(box,
+                 textvariable=booth_var,
+                 values=[f"Booth-{i}" for i in range(1,6)]
+                 ).pack(pady=5)
+
+    def proceed():
+        if not is_voting_time():
+            messagebox.showerror("Closed","10AM–5PM only")
+            return
+
+        voter_id = vid.get()
+        dob = dob_entry.get()
+        booth = booth_var.get()
+
+        cur.execute("SELECT dob,has_voted FROM registered_voters WHERE voter_id=?", (voter_id,))
+        data = cur.fetchone()
+
+        if not data:
+            messagebox.showerror("Error","Invalid ID")
+            return
+
+        try:
+            if calculateAge(dob) < 18:
+                messagebox.showerror("Error","Must be 18+")
+                return
+        except:
+            messagebox.showerror("Error","Wrong DOB")
+            return
+
+        if data[1] == 1:
+            messagebox.showerror("Error","Already Voted")
+            return
+
+        voting_page(voter_id, booth)
+        win.destroy()
+
+    tk.Button(box, text="Proceed",
+              font=("Arial",14),
+              command=proceed).pack(pady=15)
+
+# ===== VOTING PAGE =====
+def voting_page(voter_id, booth):
+    win = tk.Toplevel(root)
+    win.title("Vote")
+    win.geometry("400x400")
+    win.configure(bg="#dfe6e9")
+
+    box = tk.Frame(win, bg="white", padx=20, pady=20)
+    box.place(relx=0.5, rely=0.5, anchor="center")
+
+    tk.Label(box, text=f"Vote ({booth})",
+             font=("Arial",18,"bold"),
+             bg="white").pack(pady=10)
+
+    def vote(candidate):
+        time = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
+        cur.execute("""
+        INSERT INTO votes (voter_id, candidate, time, booth)
+        VALUES (?,?,?,?)
+        """, (voter_id, candidate, time, booth))
+
+        cur.execute("UPDATE registered_voters SET has_voted=1 WHERE voter_id=?", (voter_id,))
+        conn.commit()
+
+        messagebox.showinfo("Success","Vote Recorded")
+        win.destroy()
+
+    for c in ["Candidate A","Candidate B","Candidate C"]:
+        tk.Button(box,
+                  text=c,
+                  font=("Arial",14),
+                  width=20,
+                  command=lambda x=c: vote(x)).pack(pady=5)
+
+# ===== BUTTONS =====
+tk.Button(frame, text="Admin Login",
+          font=("Arial",18),
+          width=18,
+          bg="#2c3e50", fg="white",
+          command=admin_login).pack(pady=15)
+
+tk.Button(frame, text="Voter Login",
+          font=("Arial",18),
+          width=18,
+          bg="#27ae60", fg="white",
+          command=voter_login).pack()
+
+root.mainloop()
