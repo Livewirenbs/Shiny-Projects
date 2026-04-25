@@ -1,0 +1,306 @@
+import time
+import pywhatkit as pk
+
+print("===================================")
+print("        Wellness Wave           ")
+print("===================================")
+
+# Registration
+name = input("ENTER YOUR NAME: ")
+age = int(input("ENTER YOUR AGE: "))
+gender = input("ENTER YOUR GENDER: ")
+password = int(input("CREATE A PASSWORD: "))
+confirm_password = int(input("ENTER TO CONFIRM PASSWORD: "))
+
+# Check password confirmation
+if confirm_password != password:
+    print("Passwords do not match! Please restart the registration.")
+    exit()
+
+# Login
+print("\n======== GET INTO LOGIN FORM ========")
+
+
+def login():
+    user = input("NAME: ")
+    if user == name:
+        p1 = int(input("ENTER YOUR PASSWORD: "))
+        if p1 == password:
+            print("LOGIN SUCCESSFUL")
+        else:
+            print("PASSWORD INCORRECT, TRY AGAIN")
+            login()
+    else:
+        print("NAME INCORRECT, TRY AGAIN")
+        login()
+
+
+login()
+
+# Available medicine categories
+def categories():
+    print("\nAVAILABLE MEDICINES!!!!")
+    categories_list = [
+        "1. Fever",
+        "2. Cold & Cough",
+        "3. Pain Relief",
+        "4. Fungal Infection",
+        "5. Dry Eye",
+        "6. Dry Skin",
+        "7. Allergies",
+        "8. Hair Color",
+        "9. Hair Loss"
+    ]
+    for c in categories_list:
+        print(c)
+
+
+# Medicine selection functions
+def fever_medicines():
+    global m_d
+    print("Fever Medicines: 1.Paracetamol\n2.Dolo650\n3.Propoxyphene\n4.Aspirin\n5.108 Forte\n6.Acezon")
+    med = int(input("Choose your medicine: "))
+    prices = [10, 15, 20, 22, 24, 7]
+    names = ["Paracetamol", "Dolo650", "Propoxyphene", "Aspirin", "108 Forte", "Acezon"]
+    if 1 <= med <= 6:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        fever_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def cold_medicines():
+    global m_d
+    print("Cold Medicines: 1.Cetrizine\n2.Benadryl")
+    med = int(input("Choose your medicine: "))
+    prices = [5, 30]
+    names = ["Cetrizine", "Benadryl"]
+    if 1 <= med <= 2:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        cold_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def pain_medicines():
+    global m_d
+    print("Pain Relief: 1.Ibuprofen\n2.Volini\n3.3 Flam\n4.Dolide\n5.Aceclo\n6.Imol\n7.Indocap")
+    med = int(input("Choose your medicine: "))
+    prices = [20, 60, 30, 24, 13, 32, 50]
+    names = ["Ibuprofen", "Volini", "3 Flam", "Dolide", "Aceclo", "Imol", "Indocap"]
+    if 1 <= med <= 7:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        pain_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def fungal_medicines():
+    global m_d
+    print("Fungal Medicines: 1.Terbovag\n2.Itrozem\n3.Ketazem")
+    med = int(input("Choose your medicine: "))
+    prices = [12, 30, 20]
+    names = ["Terbovag", "Itrozem", "Ketazem"]
+    if 1 <= med <= 3:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        fungal_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def dry_eye_medicines():
+    global m_d
+    print("Dry Eye Medicines: 1.Add_tears\n2.Hyclo\n3.Hyla\n4.Ara\n5.Care_tears")
+    med = int(input("Choose your medicine: "))
+    prices = [11, 23, 31, 12, 17]
+    names = ["Add_tears", "Hyclo", "Hyla", "Ara", "Care_tears"]
+    if 1 <= med <= 5:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        dry_eye_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def dry_skin_medicines():
+    global m_d
+    print("Dry Skin Medicines: 1.Accura\n2.Linical\n3.Acrofy\n4.Lozisoft\n5.Allegix")
+    med = int(input("Choose your medicine: "))
+    prices = [34, 45, 54, 60, 75]
+    names = ["Accura", "Linical", "Acrofy", "Lozisoft", "Allegix"]
+    if 1 <= med <= 5:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        dry_skin_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def allergies_medicines():
+    global m_d
+    print("Allergy Medicines: 1.1_Al\n2.Cetcip\n3.Addcet\n4.Alerid\n5.Dazit")
+    med = int(input("Choose your medicine: "))
+    prices = [11, 23, 31, 23, 15]
+    names = ["1_Al", "Cetcip", "Addcet", "Alerid", "Dazit"]
+    if 1 <= med <= 5:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        allergies_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def hair_color_medicines():
+    global m_d
+    print("Hair Color: 1.Altris\n2.Indigo\n3.VIP\n4.Vegetal\n5.Streaks")
+    med = int(input("Choose your medicine: "))
+    prices = [100, 23, 300, 350, 170]
+    names = ["Altris", "Indigo", "VIP", "Vegetal", "Streaks"]
+    if 1 <= med <= 5:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        hair_color_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+def hair_loss_medicines():
+    global m_d
+    print("Hair Loss: 1.Aloatm\n2.Greyex\n3.Hairjoy\n4.Halixir\n5.Imxia")
+    med = int(input("Choose your medicine: "))
+    prices = [11, 23, 17, 15, 19]
+    names = ["Aloatm", "Greyex", "Hairjoy", "Halixir", "Imxia"]
+    if 1 <= med <= 5:
+        price = prices[med - 1]
+        print("Selected:", names[med - 1])
+    else:
+        print("Invalid choice. Try again.")
+        hair_loss_medicines()
+        return
+    qty = int(input("Enter quantity: "))
+    m_d = qty * price
+    print("Total price:", m_d)
+    address()
+
+
+# Address input
+def address():
+    global name1, mobile1
+    print("\n====== Address for Delivery ======")
+    name1 = input("ENTER YOUR NAME: ")
+    mobile1 = input("ENTER YOUR MOBILE NUMBER: ")
+    state = input("ENTER YOUR STATE: ")
+    city = input("ENTER YOUR CITY: ")
+    door = input("ENTER YOUR DOOR NUMBER: ")
+    street = input("ENTER YOUR STREET NAME: ")
+    payment()
+
+
+# Payment and WhatsApp confirmation
+def payment():
+    print("\nAvailable Payment Methods!!!")
+    print("1. GPay\n2. Cash on Delivery")
+    pay = int(input("Select your payment method: "))
+    total = m_d
+
+    if pay == 1:
+        amount = int(input("Enter the amount to pay: "))
+        if amount == m_d:
+            print("Payment successful!")
+        else:
+            print("Incorrect amount. Try again.")
+            payment()
+    elif pay == 2:
+        print("Delivery charge Rs.40 added for COD")
+        total += 40
+        print("Total amount (incl. delivery):", total)
+        print("Your order is placed successfully!!!")
+    else:
+        print("Invalid payment choice. Try again.")
+        payment()
+
+    # WhatsApp message
+    msg = f"""
+    ================================
+    Medicine Order Confirmation
+    Name: {name1}
+    Mobile: {mobile1}
+    Total Amount: Rs.{total}
+    ================================
+    Thank you for ordering from Wellness Wave!
+    """
+    pk.sendwhatmsg_instantly(f"+91{mobile1}", msg)
+    time.sleep(5)
+
+
+# Main selection
+def category():
+    categories()
+    choice = int(input("Select your category: "))
+    if choice == 1:
+        fever_medicines()
+    elif choice == 2:
+        cold_medicines()
+    elif choice == 3:
+        pain_medicines()
+    elif choice == 4:
+        fungal_medicines()
+    elif choice == 5:
+        dry_eye_medicines()
+    elif choice == 6:
+        dry_skin_medicines()
+    elif choice == 7:
+        allergies_medicines()
+    elif choice == 8:
+        hair_color_medicines()
+    elif choice == 9:
+        hair_loss_medicines()
+    else:
+        print("Invalid category. Try again.")
+        category()
+category()
+
