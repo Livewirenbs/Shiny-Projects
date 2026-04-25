@@ -1,0 +1,220 @@
+import pandas as pd
+import datetime
+import os
+import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
+from datetime import time
+
+ATT_FILE = "attendance.csv"
+
+COLUMNS = ["Name", "Course", "Staff", "Date", "Slot", "Hours"]
+
+COURSES = {
+    "Python": 70,
+    "Java": 70,
+    "CCNA": 56,
+    "Ethical Hacking": 60,
+    "JavaScript": 50,
+    "Full Stack": 80
+}
+
+STAFF = {
+    "Python": "Arun",
+    "Java": "Karthik",
+    "CCNA": "Suresh",
+    "Ethical Hacking": "Vikram",
+    "JavaScript": "Rahul",
+    "Full Stack": "Meena"
+}
+
+weekday_slots = [
+    ("Slot 1", time(9,30), time(11,15)),
+    ("Slot 2", time(11,30), time(13,30)),
+    ("Slot 3", time(14,30), time(16,30)),
+    ("Slot 4", time(17,30), time(19,0))
+]
+
+weekend_slots = [
+    ("Slot A", time(9,30), time(12,30)),
+    ("Slot B", time(14,0), time(17,0))
+]
+
+def load_data():
+    if not os.path.exists(ATT_FILE):
+        return pd.DataFrame(columns=COLUMNS)
+
+    try:
+        df = pd.read_csv(ATT_FILE)
+
+        # Check structure
+        if list(df.columns) != COLUMNS:
+            print("File format mismatch. Resetting file...")
+            df = pd.DataFrame(columns=COLUMNS)
+            df.to_csv(ATT_FILE, index=False)
+        return df
+
+    except:
+        print("File corrupted. Resetting file...")
+        df = pd.DataFrame(columns=COLUMNS)
+        df.to_csv(ATT_FILE, index=False)
+        return df
+
+
+def save_data(df):
+    df.to_csv(ATT_FILE, index=False)
+
+def punch_in():
+    df = load_data()
+
+    name = input("Enter student name: ")
+    now = datetime.datetime.now()
+
+    # Course selection
+    print("\nAvailable Courses:")
+    course_list = list(COURSES.keys())
+    for i, c in enumerate(course_list, start=1):
+        print(f"{i}. {c}")
+
+    try:
+        c_choice = int(input("Choose course: "))
+        course = course_list[c_choice - 1]
+    except:
+        print("Invalid course")
+        return
+
+    staff = STAFF.get(course, "Unknown")
+
+    # Weekday / Weekend
+    if now.weekday() < 5:
+        slots = weekday_slots
+        hours = 2
+        print("\nWeekday Slots:")
+    else:
+        slots = weekend_slots
+        hours = 3
+        print("\nWeekend Slots:")
+
+    # Slot selection
+    for i, (slot_name, start, end) in enumerate(slots, start=1):
+        print(f"{i}. {slot_name} ({start} - {end})")
+
+    try:
+        s_choice = int(input("Choose slot: "))
+        slot_name, start, end = slots[s_choice - 1]
+    except:
+        print("Invalid slot")
+        return
+
+    # Duplicate check
+    duplicate = df[
+        (df["Name"] == name) &
+        (df["Course"] == course) &
+        (df["Date"] == str(now.date())) &
+        (df["Slot"] == slot_name)
+    ]
+
+    if not duplicate.empty:
+        print("Attendance already marked!")
+        return
+
+    # Add new record
+    new_row = pd.DataFrame([[name, course, staff, now.date(), slot_name, hours]],
+                           columns=COLUMNS)
+
+    df = pd.concat([df, new_row], ignore_index=True)
+    save_data(df)
+
+    print(f"{name} attended {course} ({slot_name})")
+
+def view_data():
+    df = load_data()
+    if df.empty:
+        print("No data found")
+    else:
+        print(df)
+
+def analyze():
+    df = load_data()
+    if df.empty:
+        print("No data")
+        return
+
+    print("\n--- Student Progress ---")
+    grouped = df.groupby(["Name", "Course"])["Hours"].sum()
+
+    for (name, course), hours in grouped.items():
+        required = COURSES[course]
+
+        print(f"\n{name} - {course}")
+        print(f"Completed: {hours} / {required} hrs")
+
+        if hours >= required:
+            print("Completed")
+        else:
+            print("Incomplete")
+
+    print("\n--- Staff Workload ---")
+    print(df.groupby("Staff")["Hours"].sum())
+
+
+def show_graph():
+    df = load_data()
+    if df.empty:
+        print("No data")
+        return
+
+    grouped = df.groupby("Course")["Hours"].sum()
+
+    grouped.plot(kind='bar')
+    plt.title("Course Progress")
+    plt.xlabel("Course")
+    plt.ylabel("Hours")
+    plt.show()
+
+def generate_report():
+    df = load_data()
+    if df.empty:
+        print("No data")
+        return
+
+    grouped = df.groupby("Course")["Hours"].sum()
+
+    img = Image.new('RGB', (500, 400), color='white')
+    draw = ImageDraw.Draw(img)
+
+    y = 50
+    for course, hours in grouped.items():
+        required = COURSES[course]
+        draw.text((50, y), f"{course}: {hours}/{required}", fill='black')
+        y += 40
+
+    img.save("report.png")
+    print("Report saved")
+
+def main():
+    while True:
+        print("\n==== TRAINING INSTITUTE SYSTEM ====")
+        print("1. Mark Attendance")
+        print("2. View Attendance")
+        print("3. Analyze Data")
+        print("4. Show Graph")
+        print("5. Generate Report")
+        print("6. Exit")
+
+        choice = input("Enter choice: ")
+
+        if choice == "1":
+            punch_in()
+        elif choice == "2":
+            view_data()
+        elif choice == "3":
+            analyze()
+        elif choice == "4":
+            show_graph()
+        elif choice == "5":
+            generate_report()
+        elif choice == "6":
+            break
+        else:
+            print("Invalid choice")
+main()
